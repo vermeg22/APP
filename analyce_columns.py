@@ -27,6 +27,18 @@ def analyce_columns(data):
       
       left_angle_data = data['Left Knee Flexion/Extension'].to_numpy()
       left_peaks, _ = find_peaks(left_angle_data, prominence = 4)
+
       right_angle_data = data['Right Knee Flexion/Extension'].to_numpy()
       right_peaks, _ = find_peaks(right_angle_data, prominence = 4)
+
+      # Imprimir los índices de los picos
+      print(f"Índices de picos Izquierda: {left_peaks}")
+      print(f"Índices de picos Derecha: {right_peaks}")
+
+      # Obtener los valores reales en esos picos
+      valores_izq = left_angle_data[left_peaks]
+      valores_der = right_angle_data[right_peaks]
+      print(f"Ángulos máximos Izquierda (°): {valores_izq}")
+      print(f"Ángulos máximos Derecha (°): {valores_der}")
+
       return right_peaks, left_peaks
