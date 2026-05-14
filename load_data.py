@@ -54,12 +54,16 @@ def load_data(file):
         col for col in data.columns 
         if col not in cols_to_skip and is_numeric_dtype(data[col]) and not data[col].isnull().all()
     ]
+
+    print(f"Columns to analyze: {data[columns_to_analyze].columns.tolist()}")
+    print(f"Columns data: {data.columns.tolist()}")
     
     # --- 2. Peak Finding (Using your new function) ---
     # We assume 'analyce_columns' is defined in this file or imported.
     # It must return the all_peaks dictionary required by plot_columns.
     try:
         right_peaks, left_peaks = analyce_columns(data)
+
     except NameError:
         print("Error: 'analyce_columns' function not found. Peaks will not be calculated.")
         right_peaks = {}
