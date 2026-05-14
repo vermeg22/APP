@@ -178,8 +178,8 @@ class MainApp(QMainWindow):
         
 
         # DataFrame, Peaks (indices), Analysis results (Summary stats), Cycle data
-        self.data1 = {'df': None, 'peaks': None, 'summary': None, 'avg_periods': None, 'std_devs': None, 'avg_time': None}
-        self.data2 = {'df': None, 'peaks': None, 'summary': None, 'avg_periods': None, 'std_devs': None, 'avg_time': None}
+        self.data1 = {'df': None, 'right_peaks': None, 'left_peaks': None, 'summary': None, 'avg_periods': None, 'std_devs': None, 'avg_time': None}
+        self.data2 = {'df': None, 'right_peaks': None, 'left_peaks': None, 'summary': None, 'avg_periods': None, 'std_devs': None, 'avg_time': None}
         
         # --- GUI Setup ---
         self.stacked_widget = QStackedWidget(self)
@@ -235,7 +235,35 @@ class MainApp(QMainWindow):
         """
         # Call the external function which returns data (df), peaks, and summary
         try:
-            df, peaks, summary, avg_periods, std_devs, avg_time = load_data(file_path)
+            df, right_peaks, left_peaks, summary, avg_periods, std_devs, avg_time = load_data(file_path)
+
+             # 1. Guardar el DataFrame en un CSV
+            df.to_csv('data_principal.csv', index=False)
+
+            # Clase auxiliar para convertir datos de NumPy a formato que JSON entienda
+            class NpEncoder(json.JSONEncoder):
+                def default(self, obj):
+                    if isinstance(obj, np.integer): return int(obj)
+                    if isinstance(obj, np.floating): return float(obj)
+                    if isinstance(obj, np.ndarray): return obj.tolist()
+                    return super(NpEncoder, self).default(obj)
+
+            # 2. Guardar los diccionarios en archivos JSON independientes
+            archivos_diccionarios = {
+                'right_peaks.json': right_peaks,
+                'left_peaks.json': left_peaks,
+                'summary.json': summary,
+                'avg_periods.json': avg_periods,
+                'std_devs.json': std_devs,
+                'avg_time.json': avg_time
+            }
+
+            for nombre_archivo, contenido in archivos_diccionarios.items():
+                with open(nombre_archivo, 'w', encoding='utf-8') as f:
+                    json.dump(contenido, f, cls=NpEncoder, indent=4, ensure_ascii=False)
+
+            print("¡Todos los archivos han sido guardados correctamente!")
+
         except ValueError as e:
             # Handle case where load_data failed to return 6 items
             QMessageBox.critical(self, "Error de Carga", 
@@ -252,11 +280,12 @@ class MainApp(QMainWindow):
             return # Stop execution if data loading failed
         new_data_set = {
             'df': df, 
-            'peaks': peaks, 
+            'right_peaks': right_peaks,
+            'left_peaks': left_peaks,
             'summary': summary,
             'avg_periods': avg_periods,  # <-- NEW: Storing plot data
-            'std_devs': std_devs,      # <-- NEW: Storing plot data
-            'avg_time': avg_time       # <-- NEW: Storing plot data
+            'std_devs': std_devs,        # <-- NEW: Storing plot data
+            'avg_time': avg_time         # <-- NEW: Storing plot data
         }
         
         if file_num == 1:
@@ -781,6 +810,10 @@ class GraphPage(QWidget):
                 # --- Plot File 1 (Pre) ---
                 if 'Knee' in variable_name or 'Ankle' in variable_name: #Plots for leg variables, with right/left
                     y1 = avg_periods1[f"Right {variable_name}"]
+                    if y1 is None:
+                        print(f"Advertencia: No se encontró la variable {variable_name}")
+                        continue # Salta esta gráfica y sigue con la siguiente
+                    y1 = avg_periods1.get(variable_name)
                     x1 = avg_time1.get(f"Right {variable_name}")
                     f1 = interp1d(x1, y1, kind='linear', fill_value='extrapolate')
                     y1_resampled = f1(normalized_time)
@@ -842,6 +875,9 @@ class GraphPage(QWidget):
                     
                 else: #plots for trunk variables
                     y1 = avg_periods1[f"{variable_name}"]
+                    if y1 is None:
+                        print(f"Advertencia: No se encontró la variable {variable_name}")
+                        continue # Salta esta gráfica y sigue con la siguiente
                     x1 = avg_time1.get(f"{variable_name}")
                     f1 = interp1d(x1, y1, kind='linear', fill_value='extrapolate')
                     y1_resampled = f1(normalized_time)
