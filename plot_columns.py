@@ -1,4 +1,4 @@
-def plot_columns(right_peaks,left_peaks, data,columns_to_analyce):
+def plot_columns(right_peaks, left_peaks, data, columns_to_analyce):
     import numpy as np
     from scipy.interpolate import interp1d
     tasks = []
@@ -34,6 +34,8 @@ def plot_columns(right_peaks,left_peaks, data,columns_to_analyce):
         # Extract the original column name from the key 
         # (e.g., 'L3 z' from 'L3 z (R-Cycle)')
         original_column = column_key.split(" (")[0]
+
+        print("ORIGINAL COLUMN:", avg_periods.keys())
             
         for i in range(1, len(peaks)):
             start_index = peaks[i-1]
